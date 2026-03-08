@@ -501,25 +501,25 @@ const ResultsDashboard = ({ domain, isRunning, hasResults, onGenerateReport, bac
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-background">
       {/* Top bar */}
-      <div className="px-5 py-3 border-b border-border flex items-center justify-between bg-card">
-        <div className="flex items-center gap-3">
-          <span className="text-base font-mono font-medium text-primary">{domain || 'No target'}</span>
+      <div className="px-3 sm:px-5 py-3 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-2 bg-card">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <span className="text-sm sm:text-base font-mono font-medium text-primary truncate">{domain || 'No target'}</span>
           {hasResults && (
-            <span className="px-2.5 py-1 bg-success/10 border border-success/30 rounded text-xs text-success">
+            <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-success/10 border border-success/30 rounded text-[10px] sm:text-xs text-success whitespace-nowrap">
               Completed
             </span>
           )}
           {isRunning && (
-            <span className="px-2.5 py-1 bg-primary/10 border border-primary/30 rounded text-xs text-primary flex items-center gap-1.5">
+            <span className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-primary/10 border border-primary/30 rounded text-[10px] sm:text-xs text-primary flex items-center gap-1.5 whitespace-nowrap">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-scan-pulse" />
               Scanning
             </span>
           )}
         </div>
         {hasResults && (
-          <div className="flex gap-2">
+          <div className="flex gap-1.5 sm:gap-2 flex-wrap">
             {['HTML', 'PDF', 'JSON', 'MD'].map(fmt => (
-              <button key={fmt} className="px-3 py-1.5 border border-border rounded text-xs text-muted-foreground hover:text-primary hover:border-primary/30 transition-smooth">
+              <button key={fmt} className="px-2 sm:px-3 py-1 sm:py-1.5 border border-border rounded text-[10px] sm:text-xs text-muted-foreground hover:text-primary hover:border-primary/30 transition-smooth">
                 Export {fmt}
               </button>
             ))}
