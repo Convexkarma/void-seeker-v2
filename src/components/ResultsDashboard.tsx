@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MOCK_RESULTS } from '@/data/mockData';
-import { FileText, Download, Copy, Check, ExternalLink, Filter, Search, X, Eye, EyeOff } from 'lucide-react';
+import { Copy, Check, ExternalLink, Search, X, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 interface ResultsDashboardProps {
@@ -9,7 +9,7 @@ interface ResultsDashboardProps {
   hasResults: boolean;
 }
 
-const TABS = ['Overview', 'Subdomains', 'Ports', 'Vulns', 'Dirs', 'Tech', 'Screenshots', 'DNS/WHOIS', 'Intel', 'Logs'];
+const TABS = ['Overview', 'Subdomains', 'Ports', 'Vulnerabilities', 'Directories', 'Tech & Headers', 'DNS & WHOIS', 'Logs'];
 
 const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardProps) => {
   const [activeTab, setActiveTab] = useState(0);
@@ -18,7 +18,6 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
   const [subFilter, setSubFilter] = useState('');
   const [sensitiveOnly, setSensitiveOnly] = useState(false);
   const [selectedLogModule, setSelectedLogModule] = useState('subfinder');
-  const [lightboxImg, setLightboxImg] = useState<string | null>(null);
   const [emailRevealed, setEmailRevealed] = useState<Record<string, boolean>>({});
 
   const data = MOCK_RESULTS;
@@ -30,8 +29,8 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
   };
 
   const CopyBtn = ({ text, id }: { text: string; id: string }) => (
-    <button onClick={() => copyToClipboard(text, id)} className="text-muted-foreground hover:text-primary transition-smooth">
-      {copiedId === id ? <Check className="w-3 h-3 text-success" /> : <Copy className="w-3 h-3" />}
+    <button onClick={() => copyToClipboard(text, id)} className="text-muted-foreground hover:text-primary transition-smooth p-1">
+      {copiedId === id ? <Check className="w-3.5 h-3.5 text-success" /> : <Copy className="w-3.5 h-3.5" />}
     </button>
   );
 
@@ -53,7 +52,7 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
   ));
 
   const scoreColor = attackScore >= 70 ? 'text-danger' : attackScore >= 40 ? 'text-warning' : 'text-success';
-  const scoreLabel = attackScore >= 70 ? 'HIGH RISK' : attackScore >= 40 ? 'MODERATE' : 'LIMITED';
+  const scoreLabel = attackScore >= 70 ? 'High Risk' : attackScore >= 40 ? 'Moderate' : 'Low Risk';
 
   const chartData = [
     { name: 'Critical', count: vulnCounts.critical, fill: 'hsl(345 100% 60%)' },
@@ -64,50 +63,46 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
   ];
 
   const EmptyState = ({ message }: { message: string }) => (
-    <div className="flex items-center justify-center h-48">
-      <div className="border border-border rounded-sm px-6 py-4 text-xs font-mono text-muted-foreground">
-        [ {message} ]
-      </div>
+    <div className="flex flex-col items-center justify-center h-48 text-center">
+      <AlertCircle className="w-8 h-8 text-muted-foreground/30 mb-3" />
+      <p className="text-sm text-muted-foreground">{message}</p>
     </div>
   );
 
   const renderTab = () => {
     if (!hasResults) {
-      return <EmptyState message="No scan results yet. Configure and launch a scan." />;
+      return <EmptyState message="No results yet. Launch a scan to get started." />;
     }
 
     switch (activeTab) {
+      // ─── Overview ─────────────────────────
       case 0: return (
         <div className="space-y-6">
-          {/* Stats row */}
-          <div className="grid grid-cols-4 gap-3">
+          {/* Key stats */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
               { label: 'Subdomains', value: data.subdomains.length, color: 'text-primary' },
-              { label: 'Live Hosts', value: data.subdomains.filter(s => s.live).length, color: 'text-success' },
               { label: 'Open Ports', value: data.ports.length, color: 'text-neon-cyan' },
-              { label: 'Critical', value: vulnCounts.critical, color: 'text-danger' },
-              { label: 'High', value: vulnCounts.high, color: 'text-warning' },
-              { label: 'Medium', value: vulnCounts.medium, color: 'text-severity-medium' },
+              { label: 'Vulnerabilities', value: totalVulns, color: 'text-danger' },
               { label: 'Directories', value: data.dirs.length, color: 'text-accent' },
-              { label: 'Emails', value: data.emails.length, color: 'text-neon-bright' },
             ].map(stat => (
-              <div key={stat.label} className="bracket-card border border-border rounded-sm p-3 bg-background">
-                <div className={`text-2xl font-mono font-bold ${stat.color}`}>{stat.value}</div>
-                <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mt-1">{stat.label}</div>
+              <div key={stat.label} className="border border-border rounded-lg p-4 bg-card">
+                <div className={`text-3xl font-mono font-bold ${stat.color}`}>{stat.value}</div>
+                <div className="text-xs text-muted-foreground mt-1">{stat.label}</div>
               </div>
             ))}
           </div>
 
-          {/* Attack surface score */}
-          <div className="bracket-card border border-border rounded-sm p-4 bg-background">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground">Attack Surface Score</span>
-              <span className={`text-xs font-mono font-bold ${scoreColor}`}>{scoreLabel}</span>
+          {/* Risk score */}
+          <div className="border border-border rounded-lg p-5 bg-card">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-medium text-foreground">Attack Surface Score</h3>
+              <span className={`text-sm font-medium ${scoreColor}`}>{scoreLabel}</span>
             </div>
             <div className="flex items-end gap-4">
               <span className={`text-5xl font-mono font-bold ${scoreColor}`}>{attackScore}</span>
               <div className="flex-1 mb-2">
-                <div className="w-full h-2 bg-border rounded-full overflow-hidden">
+                <div className="w-full h-3 bg-muted rounded-full overflow-hidden">
                   <div
                     className="h-full rounded-full transition-all duration-700"
                     style={{
@@ -121,84 +116,101 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
           </div>
 
           {/* Vuln chart */}
-          <div className="bracket-card border border-border rounded-sm p-4 bg-background">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-3 block">Vulnerability Distribution</span>
+          <div className="border border-border rounded-lg p-5 bg-card">
+            <h3 className="text-sm font-medium text-foreground mb-4">Vulnerability Breakdown</h3>
             <ResponsiveContainer width="100%" height={180}>
               <BarChart data={chartData}>
-                <XAxis dataKey="name" tick={{ fill: 'hsl(210 40% 65%)', fontSize: 10, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
-                <YAxis tick={{ fill: 'hsl(210 40% 35%)', fontSize: 10, fontFamily: 'JetBrains Mono' }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="name" tick={{ fill: 'hsl(210 40% 65%)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fill: 'hsl(210 40% 35%)', fontSize: 11 }} axisLine={false} tickLine={false} />
                 <Tooltip
-                  contentStyle={{ background: 'hsl(214 60% 5%)', border: '1px solid hsl(214 60% 15%)', borderRadius: 4, fontFamily: 'JetBrains Mono', fontSize: 11 }}
+                  contentStyle={{ background: 'hsl(214 60% 5%)', border: '1px solid hsl(214 60% 15%)', borderRadius: 8, fontSize: 12 }}
                   labelStyle={{ color: 'hsl(207 100% 95%)' }}
                 />
-                <Bar dataKey="count" radius={[2, 2, 0, 0]}>
+                <Bar dataKey="count" radius={[4, 4, 0, 0]}>
                   {chartData.map((entry, i) => <Cell key={i} fill={entry.fill} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
 
-          {/* WAF + High-risk ports */}
+          {/* Quick info row */}
           <div className="grid grid-cols-2 gap-3">
             {data.waf.protected && (
-              <div className="border border-accent/30 rounded-sm p-3 bg-accent/5">
-                <span className="text-[10px] font-mono uppercase tracking-widest text-accent">WAF Detected</span>
-                <div className="text-sm font-mono text-foreground mt-1">{data.waf.name}</div>
+              <div className="border border-accent/20 rounded-lg p-4 bg-accent/5">
+                <p className="text-xs text-muted-foreground">WAF Detected</p>
+                <p className="text-sm font-medium text-accent mt-1">{data.waf.name}</p>
               </div>
             )}
-            <div className="border border-warning/30 rounded-sm p-3 bg-warning/5">
-              <span className="text-[10px] font-mono uppercase tracking-widest text-warning mb-2 block">High-Risk Ports</span>
-              <div className="flex flex-wrap gap-1">
+            <div className="border border-warning/20 rounded-lg p-4 bg-warning/5">
+              <p className="text-xs text-muted-foreground">High-Risk Ports</p>
+              <div className="flex flex-wrap gap-1.5 mt-2">
                 {data.ports.filter(p => p.risk === 'high').map(p => (
-                  <span key={p.port} className="px-2 py-0.5 bg-warning/10 border border-warning/30 rounded-sm text-[11px] font-mono text-warning">
+                  <span key={p.port} className="px-2 py-0.5 bg-warning/10 border border-warning/30 rounded text-xs font-mono text-warning">
                     {p.port}
                   </span>
                 ))}
               </div>
             </div>
           </div>
+
+          {/* Emails */}
+          <div className="border border-border rounded-lg p-5 bg-card">
+            <h3 className="text-sm font-medium text-foreground mb-3">Discovered Emails ({data.emails.length})</h3>
+            <div className="flex flex-wrap gap-2">
+              {data.emails.map(email => {
+                const revealed = emailRevealed[email];
+                const redacted = email.replace(/^(.).*(@.*)$/, '$1••••$2');
+                return (
+                  <div key={email} className="flex items-center gap-1.5 px-2.5 py-1.5 border border-border rounded bg-background text-xs font-mono">
+                    <span className="text-foreground">{revealed ? email : redacted}</span>
+                    <button onClick={() => setEmailRevealed(prev => ({ ...prev, [email]: !prev[email] }))} className="text-muted-foreground hover:text-primary">
+                      {revealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
         </div>
       );
 
+      // ─── Subdomains ─────────────────────────
       case 1: {
         const filtered = data.subdomains.filter(s => s.name.toLowerCase().includes(subFilter.toLowerCase()));
         return (
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <input
                   value={subFilter}
                   onChange={e => setSubFilter(e.target.value)}
-                  placeholder="Filter subdomains..."
-                  className="w-full bg-background border border-border rounded-sm px-3 pl-8 py-1.5 font-mono text-xs text-foreground focus:border-primary focus:outline-none transition-smooth"
+                  placeholder="Search subdomains..."
+                  className="w-full bg-background border border-border rounded-lg px-3 pl-9 py-2 text-sm text-foreground focus:border-primary focus:outline-none transition-smooth"
                 />
               </div>
-              <span className="text-[10px] font-mono text-muted-foreground">{filtered.length} found</span>
-              <button className="px-3 py-1.5 border border-border rounded-sm text-[10px] font-mono text-secondary-foreground hover:text-primary hover:border-primary/30 transition-smooth">
-                Export CSV
-              </button>
+              <span className="text-sm text-muted-foreground">{filtered.length} found</span>
             </div>
-            <div className="border border-border rounded-sm overflow-hidden">
-              <table className="w-full text-xs font-mono">
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-elevated text-muted-foreground text-[10px] uppercase tracking-wider">
-                    <th className="text-left px-3 py-2">Subdomain</th>
-                    <th className="text-center px-3 py-2">Status</th>
-                    <th className="text-right px-3 py-2">Actions</th>
+                  <tr className="bg-card text-muted-foreground text-xs">
+                    <th className="text-left px-4 py-3">Subdomain</th>
+                    <th className="text-center px-4 py-3">Live</th>
+                    <th className="text-right px-4 py-3">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-border font-mono text-sm">
                   {filtered.map(sub => (
-                    <tr key={sub.name} className="hover:bg-elevated/50 transition-smooth">
-                      <td className="px-3 py-2 text-primary">{sub.name}</td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={`w-2 h-2 rounded-full inline-block ${sub.live ? 'bg-success' : 'bg-muted-foreground/30'}`} />
+                    <tr key={sub.name} className="hover:bg-card/50 transition-smooth">
+                      <td className="px-4 py-2.5 text-primary">{sub.name}</td>
+                      <td className="px-4 py-2.5 text-center">
+                        <span className={`inline-block w-2.5 h-2.5 rounded-full ${sub.live ? 'bg-success' : 'bg-muted-foreground/20'}`} />
                       </td>
-                      <td className="px-3 py-2 text-right flex items-center justify-end gap-2">
+                      <td className="px-4 py-2.5 text-right flex items-center justify-end gap-1">
                         <CopyBtn text={sub.name} id={`sub-${sub.name}`} />
-                        <a href={`https://${sub.name}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-smooth">
-                          <ExternalLink className="w-3 h-3" />
+                        <a href={`https://${sub.name}`} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary p-1">
+                          <ExternalLink className="w-3.5 h-3.5" />
                         </a>
                       </td>
                     </tr>
@@ -210,54 +222,37 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
         );
       }
 
+      // ─── Ports ─────────────────────────
       case 2: return (
         <div className="space-y-4">
-          {/* Port grid */}
-          <div className="flex flex-wrap gap-1.5">
-            {data.ports.map(p => (
-              <div
-                key={p.port}
-                title={`${p.port}/${p.protocol} — ${p.service} — ${p.danger || 'No known issues'}`}
-                className={`w-10 h-10 border rounded-sm flex items-center justify-center text-[10px] font-mono cursor-default transition-smooth
-                  ${p.risk === 'high' ? 'border-danger/50 bg-danger/10 text-danger hover:neon-glow-sm' :
-                    p.risk === 'medium' ? 'border-warning/50 bg-warning/10 text-warning' :
-                    'border-border bg-background text-secondary-foreground'}`}
-              >
-                {p.port}
-              </div>
-            ))}
-          </div>
-          {/* Port table */}
-          <div className="border border-border rounded-sm overflow-hidden">
-            <table className="w-full text-xs font-mono">
+          <div className="border border-border rounded-lg overflow-hidden">
+            <table className="w-full text-sm">
               <thead>
-                <tr className="bg-elevated text-muted-foreground text-[10px] uppercase tracking-wider">
-                  <th className="text-left px-3 py-2">Port</th>
-                  <th className="text-left px-3 py-2">Proto</th>
-                  <th className="text-left px-3 py-2">Service</th>
-                  <th className="text-left px-3 py-2">Product</th>
-                  <th className="text-left px-3 py-2">Risk</th>
-                  <th className="text-left px-3 py-2">Notes</th>
+                <tr className="bg-card text-muted-foreground text-xs">
+                  <th className="text-left px-4 py-3">Port</th>
+                  <th className="text-left px-4 py-3">Service</th>
+                  <th className="text-left px-4 py-3">Product</th>
+                  <th className="text-left px-4 py-3">Risk</th>
+                  <th className="text-left px-4 py-3">Notes</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {data.ports.map(p => (
-                  <tr key={p.port} className={`hover:bg-elevated/50 transition-smooth ${p.risk === 'high' ? 'bg-danger/5' : ''}`}>
-                    <td className={`px-3 py-2 font-bold ${p.risk === 'high' ? 'text-danger' : p.risk === 'medium' ? 'text-warning' : 'text-foreground'}`}>
-                      {p.port}
+                  <tr key={p.port} className={`hover:bg-card/50 transition-smooth ${p.risk === 'high' ? 'bg-danger/5' : ''}`}>
+                    <td className={`px-4 py-2.5 font-mono font-bold ${p.risk === 'high' ? 'text-danger' : p.risk === 'medium' ? 'text-warning' : 'text-foreground'}`}>
+                      {p.port}/{p.protocol}
                     </td>
-                    <td className="px-3 py-2 text-muted-foreground">{p.protocol}</td>
-                    <td className="px-3 py-2 text-foreground">{p.service}</td>
-                    <td className="px-3 py-2 text-secondary-foreground">{p.product} {p.version}</td>
-                    <td className="px-3 py-2">
-                      <span className={`px-1.5 py-0.5 rounded-sm text-[9px] uppercase
-                        ${p.risk === 'high' ? 'bg-danger/20 text-danger' :
-                          p.risk === 'medium' ? 'bg-warning/20 text-warning' :
+                    <td className="px-4 py-2.5 text-foreground">{p.service}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground">{p.product} {p.version}</td>
+                    <td className="px-4 py-2.5">
+                      <span className={`px-2 py-1 rounded text-xs font-medium
+                        ${p.risk === 'high' ? 'bg-danger/15 text-danger' :
+                          p.risk === 'medium' ? 'bg-warning/15 text-warning' :
                           'bg-muted text-muted-foreground'}`}>
                         {p.risk}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-muted-foreground text-[10px]">{p.danger}</td>
+                    <td className="px-4 py-2.5 text-xs text-muted-foreground">{p.danger}</td>
                   </tr>
                 ))}
               </tbody>
@@ -266,59 +261,53 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
         </div>
       );
 
+      // ─── Vulnerabilities ─────────────────────────
       case 3: {
         const filteredVulns = data.vulns.filter(v => vulnFilter === 'all' || v.severity === vulnFilter);
         return (
           <div className="space-y-4">
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {['all', 'critical', 'high', 'medium', 'low', 'info'].map(f => (
                 <button
                   key={f}
                   onClick={() => setVulnFilter(f)}
-                  className={`px-3 py-1 rounded-sm text-[10px] font-mono uppercase tracking-wider transition-smooth border
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-smooth border
                     ${vulnFilter === f
                       ? f === 'critical' ? 'border-danger bg-danger/10 text-danger' :
                         f === 'high' ? 'border-warning bg-warning/10 text-warning' :
                         f === 'medium' ? 'border-severity-medium bg-severity-medium/10 text-severity-medium' :
                         f === 'low' ? 'border-primary bg-primary/10 text-primary' :
-                        f === 'info' ? 'border-secondary-foreground bg-secondary text-secondary-foreground' :
                         'border-primary bg-primary/10 text-primary'
-                      : 'border-border text-muted-foreground hover:border-primary/30'
+                      : 'border-border text-muted-foreground hover:text-foreground'
                     }`}
                 >
-                  {f} {f !== 'all' ? `(${vulnCounts[f as keyof typeof vulnCounts]})` : `(${totalVulns})`}
+                  {f === 'all' ? `All (${totalVulns})` : `${f} (${vulnCounts[f as keyof typeof vulnCounts]})`}
                 </button>
               ))}
             </div>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {filteredVulns.map((v, i) => (
                 <div
                   key={i}
-                  className={`border rounded-sm p-3 bg-background transition-smooth
-                    ${v.severity === 'critical' ? 'border-l-2 border-l-danger border-border' :
-                      v.severity === 'high' ? 'border-l-2 border-l-warning border-border' :
-                      v.severity === 'medium' ? 'border-l-2 border-l-severity-medium border-border' :
+                  className={`border rounded-lg p-4 bg-card transition-smooth
+                    ${v.severity === 'critical' ? 'border-l-4 border-l-danger border-t-border border-r-border border-b-border' :
+                      v.severity === 'high' ? 'border-l-4 border-l-warning border-t-border border-r-border border-b-border' :
                       'border-border'}
-                    ${v.fp ? 'opacity-40 line-through' : ''}`}
+                    ${v.fp ? 'opacity-40' : ''}`}
                 >
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex items-center gap-2">
-                      <span className={`px-1.5 py-0.5 rounded-sm text-[9px] font-mono uppercase font-bold
-                        ${v.severity === 'critical' ? 'bg-danger/20 text-danger' :
-                          v.severity === 'high' ? 'bg-warning/20 text-warning' :
-                          v.severity === 'medium' ? 'bg-severity-medium/20 text-severity-medium' :
-                          v.severity === 'low' ? 'bg-primary/20 text-primary' :
-                          'bg-muted text-muted-foreground'}`}>
-                        {v.severity}
-                      </span>
-                      <span className="text-xs font-mono text-foreground">{v.template}</span>
-                    </div>
-                    <button className="text-[9px] font-mono text-muted-foreground hover:text-primary transition-smooth">
-                      Mark FP
-                    </button>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase
+                      ${v.severity === 'critical' ? 'bg-danger/20 text-danger' :
+                        v.severity === 'high' ? 'bg-warning/20 text-warning' :
+                        v.severity === 'medium' ? 'bg-severity-medium/20 text-severity-medium' :
+                        v.severity === 'low' ? 'bg-primary/20 text-primary' :
+                        'bg-muted text-muted-foreground'}`}>
+                      {v.severity}
+                    </span>
+                    <span className="text-sm font-medium text-foreground">{v.template}</span>
                   </div>
-                  <div className="text-[11px] font-mono text-neon-cyan mb-1">{v.url}</div>
-                  <div className="text-[10px] font-mono text-muted-foreground">{v.raw}</div>
+                  <p className="text-xs font-mono text-primary mb-1">{v.url}</p>
+                  <p className="text-xs text-muted-foreground">{v.matcher}</p>
                 </div>
               ))}
             </div>
@@ -326,47 +315,38 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
         );
       }
 
+      // ─── Directories ─────────────────────────
       case 4: {
         const dirs = sensitiveOnly ? data.dirs.filter(d => d.sensitive) : data.dirs;
         return (
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
+          <div className="space-y-4">
+            <div className="flex items-center gap-4">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={sensitiveOnly}
-                  onChange={e => setSensitiveOnly(e.target.checked)}
-                  className="accent-danger"
-                />
-                <span className="text-xs font-mono text-secondary-foreground">Sensitive only</span>
+                <input type="checkbox" checked={sensitiveOnly} onChange={e => setSensitiveOnly(e.target.checked)} className="accent-danger w-4 h-4" />
+                <span className="text-sm text-foreground">Sensitive only</span>
               </label>
-              <span className="text-[10px] font-mono text-muted-foreground">{dirs.length} directories</span>
+              <span className="text-sm text-muted-foreground">{dirs.length} paths</span>
             </div>
-            <div className="border border-border rounded-sm overflow-hidden">
-              <table className="w-full text-xs font-mono">
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-elevated text-muted-foreground text-[10px] uppercase tracking-wider">
-                    <th className="text-left px-3 py-2">Path</th>
-                    <th className="text-center px-3 py-2">Status</th>
-                    <th className="text-center px-3 py-2">Sensitive</th>
+                  <tr className="bg-card text-muted-foreground text-xs">
+                    <th className="text-left px-4 py-3">Path</th>
+                    <th className="text-center px-4 py-3">Status</th>
+                    <th className="text-center px-4 py-3">Sensitive</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-border font-mono">
                   {dirs.map(d => (
-                    <tr key={d.path} className={`hover:bg-elevated/50 transition-smooth ${d.sensitive ? 'bg-danger/5' : ''}`}>
-                      <td className="px-3 py-2 text-foreground flex items-center gap-1.5">
-                        {d.path.includes('.git') && <span title="Git">📁</span>}
-                        {d.path.includes('.env') && <span title="Env">🔑</span>}
-                        {d.path.includes('admin') && <span title="Admin">🛡</span>}
-                        {d.path}
-                      </td>
-                      <td className="px-3 py-2 text-center">
-                        <span className={`${d.status < 300 ? 'text-success' : d.status < 400 ? 'text-severity-medium' : 'text-muted-foreground'}`}>
+                    <tr key={d.path} className={`hover:bg-card/50 transition-smooth ${d.sensitive ? 'bg-danger/5' : ''}`}>
+                      <td className="px-4 py-2.5 text-foreground">{d.path}</td>
+                      <td className="px-4 py-2.5 text-center">
+                        <span className={`${d.status < 300 ? 'text-success' : d.status < 400 ? 'text-warning' : 'text-muted-foreground'}`}>
                           {d.status}
                         </span>
                       </td>
-                      <td className="px-3 py-2 text-center">
-                        {d.sensitive && <span className="text-danger text-[10px]">⚠</span>}
+                      <td className="px-4 py-2.5 text-center">
+                        {d.sensitive && <span className="text-danger">⚠</span>}
                       </td>
                     </tr>
                   ))}
@@ -377,28 +357,29 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
         );
       }
 
+      // ─── Tech & Headers ─────────────────────────
       case 5: return (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2 block">Technologies Detected</span>
+            <h3 className="text-sm font-medium text-foreground mb-3">Technologies</h3>
             <div className="flex flex-wrap gap-2">
               {data.tech.map(t => (
-                <div key={t.name} className="px-3 py-1.5 border border-border rounded-sm bg-background">
-                  <span className="text-xs font-mono text-primary">{t.name}</span>
-                  {t.version && <span className="text-[10px] font-mono text-muted-foreground ml-1.5">{t.version}</span>}
+                <div key={t.name} className="px-3 py-2 border border-border rounded-lg bg-card">
+                  <span className="text-sm text-primary">{t.name}</span>
+                  {t.version && <span className="text-xs text-muted-foreground ml-1.5">{t.version}</span>}
                 </div>
               ))}
             </div>
           </div>
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2 block">HTTP Headers</span>
-            <div className="border border-border rounded-sm overflow-hidden">
-              <table className="w-full text-xs font-mono">
+            <h3 className="text-sm font-medium text-foreground mb-3">HTTP Headers</h3>
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
                 <tbody className="divide-y divide-border">
                   {data.headers.map(h => (
-                    <tr key={h.key} className="hover:bg-elevated/50 transition-smooth">
-                      <td className="px-3 py-2 text-neon-cyan w-1/3">{h.key}</td>
-                      <td className="px-3 py-2 text-foreground">{h.value}</td>
+                    <tr key={h.key} className="hover:bg-card/50 transition-smooth">
+                      <td className="px-4 py-2.5 text-primary w-1/3 font-medium">{h.key}</td>
+                      <td className="px-4 py-2.5 text-foreground font-mono text-xs">{h.value}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -406,10 +387,10 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
             </div>
           </div>
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2 block">Missing Security Headers</span>
-            <div className="flex flex-wrap gap-1.5">
+            <h3 className="text-sm font-medium text-foreground mb-3">Missing Security Headers</h3>
+            <div className="flex flex-wrap gap-2">
               {data.missingHeaders.map(h => (
-                <span key={h} className="px-2 py-1 border border-danger/30 rounded-sm bg-danger/5 text-[10px] font-mono text-danger">
+                <span key={h} className="px-3 py-1.5 border border-danger/20 rounded-lg bg-danger/5 text-xs text-danger">
                   ✗ {h}
                 </span>
               ))}
@@ -418,57 +399,26 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
         </div>
       );
 
+      // ─── DNS & WHOIS ─────────────────────────
       case 6: return (
-        <div>
-          <EmptyState message="Screenshots require gowitness + backend. Mock preview shown below." />
-          <div className="grid grid-cols-3 gap-3 mt-4">
-            {['www.example.com', 'api.example.com', 'admin.example.com'].map(host => (
-              <div
-                key={host}
-                onClick={() => setLightboxImg(host)}
-                className="bracket-card border border-border rounded-sm overflow-hidden cursor-pointer hover:border-primary/30 transition-smooth group"
-              >
-                <div className="aspect-video bg-elevated flex items-center justify-center">
-                  <span className="text-xs font-mono text-muted-foreground group-hover:text-primary transition-smooth">[Screenshot]</span>
-                </div>
-                <div className="px-2 py-1.5 text-[10px] font-mono text-secondary-foreground truncate">{host}</div>
-              </div>
-            ))}
-          </div>
-          {lightboxImg && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center glass" onClick={() => setLightboxImg(null)}>
-              <div className="relative bg-card border border-border rounded-sm p-8 max-w-2xl">
-                <button onClick={() => setLightboxImg(null)} className="absolute top-2 right-2 text-muted-foreground hover:text-foreground">
-                  <X className="w-4 h-4" />
-                </button>
-                <div className="aspect-video bg-elevated flex items-center justify-center rounded-sm">
-                  <span className="text-sm font-mono text-muted-foreground">{lightboxImg}</span>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      );
-
-      case 7: return (
         <div className="space-y-6">
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2 block">DNS Records</span>
-            <div className="border border-border rounded-sm overflow-hidden">
-              <table className="w-full text-xs font-mono">
+            <h3 className="text-sm font-medium text-foreground mb-3">DNS Records</h3>
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr className="bg-elevated text-muted-foreground text-[10px] uppercase tracking-wider">
-                    <th className="text-left px-3 py-2">Domain</th>
-                    <th className="text-left px-3 py-2">Type</th>
-                    <th className="text-left px-3 py-2">Value</th>
+                  <tr className="bg-card text-muted-foreground text-xs">
+                    <th className="text-left px-4 py-3">Domain</th>
+                    <th className="text-left px-4 py-3">Type</th>
+                    <th className="text-left px-4 py-3">Value</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {data.dns.map((r, i) => (
-                    <tr key={i} className="hover:bg-elevated/50 transition-smooth">
-                      <td className="px-3 py-2 text-success">{r.domain}</td>
-                      <td className="px-3 py-2"><span className="px-1.5 py-0.5 bg-primary/10 text-primary rounded-sm text-[9px]">{r.type}</span></td>
-                      <td className="px-3 py-2 text-foreground">{r.value}</td>
+                    <tr key={i} className="hover:bg-card/50 transition-smooth">
+                      <td className="px-4 py-2.5 font-mono text-success text-xs">{r.domain}</td>
+                      <td className="px-4 py-2.5"><span className="px-2 py-0.5 bg-primary/10 text-primary rounded text-xs">{r.type}</span></td>
+                      <td className="px-4 py-2.5 text-foreground font-mono text-xs">{r.value}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -476,14 +426,14 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
             </div>
           </div>
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2 block">WHOIS</span>
-            <div className="border border-border rounded-sm overflow-hidden">
-              <table className="w-full text-xs font-mono">
+            <h3 className="text-sm font-medium text-foreground mb-3">WHOIS</h3>
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-sm">
                 <tbody className="divide-y divide-border">
                   {Object.entries(data.whois).filter(([k]) => k !== 'nameservers').map(([k, v]) => (
-                    <tr key={k} className="hover:bg-elevated/50 transition-smooth">
-                      <td className="px-3 py-2 text-neon-cyan w-1/3 capitalize">{k}</td>
-                      <td className="px-3 py-2 text-foreground">{String(v)}</td>
+                    <tr key={k} className="hover:bg-card/50 transition-smooth">
+                      <td className="px-4 py-2.5 text-primary w-1/3 capitalize font-medium">{k}</td>
+                      <td className="px-4 py-2.5 text-foreground">{String(v)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -491,10 +441,10 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
             </div>
           </div>
           <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2 block">Email Security</span>
+            <h3 className="text-sm font-medium text-foreground mb-3">Email Security</h3>
             <div className="flex gap-3">
               {Object.entries(data.emailSecurity).map(([k, v]) => (
-                <span key={k} className={`px-3 py-1.5 border rounded-sm text-xs font-mono ${v ? 'border-success/30 text-success bg-success/5' : 'border-danger/30 text-danger bg-danger/5'}`}>
+                <span key={k} className={`px-4 py-2 border rounded-lg text-sm font-medium ${v ? 'border-success/30 text-success bg-success/5' : 'border-danger/30 text-danger bg-danger/5'}`}>
                   {v ? '✓' : '✗'} {k.toUpperCase()}
                 </span>
               ))}
@@ -503,66 +453,37 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
         </div>
       );
 
-      case 8: return (
-        <div className="space-y-6">
-          <div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2 block">
-              Emails ({data.emails.length})
-            </span>
-            <div className="space-y-1.5">
-              {data.emails.map(email => {
-                const revealed = emailRevealed[email];
-                const redacted = email.replace(/^(.).*(@.*)$/, '$1••••$2');
-                return (
-                  <div key={email} className="flex items-center gap-2 px-3 py-2 border border-border rounded-sm bg-background">
-                    <span className="text-xs font-mono text-foreground flex-1">{revealed ? email : redacted}</span>
-                    <button
-                      onClick={() => setEmailRevealed(prev => ({ ...prev, [email]: !prev[email] }))}
-                      className="text-muted-foreground hover:text-primary transition-smooth"
-                    >
-                      {revealed ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
-                    </button>
-                    <CopyBtn text={email} id={`email-${email}`} />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      );
-
-      case 9: return (
-        <div className="flex gap-0 h-full min-h-[400px]">
-          {/* Module list */}
-          <div className="w-36 min-w-[136px] border-r border-border overflow-y-auto">
+      // ─── Logs ─────────────────────────
+      case 7: return (
+        <div className="flex gap-0 h-full min-h-[400px] border border-border rounded-lg overflow-hidden">
+          <div className="w-40 border-r border-border bg-card overflow-y-auto">
             {Object.keys(data.logs).map(mod => (
               <button
                 key={mod}
                 onClick={() => setSelectedLogModule(mod)}
-                className={`w-full text-left px-3 py-2 text-xs font-mono transition-smooth border-l-2
+                className={`w-full text-left px-4 py-2.5 text-sm transition-smooth
                   ${selectedLogModule === mod
-                    ? 'border-l-primary bg-primary/5 text-primary'
-                    : 'border-l-transparent text-secondary-foreground hover:bg-elevated/50'
+                    ? 'bg-primary/10 text-primary font-medium'
+                    : 'text-muted-foreground hover:bg-card hover:text-foreground'
                   }`}
               >
                 {mod}
               </button>
             ))}
           </div>
-          {/* Log output */}
-          <div className="flex-1 overflow-auto p-3 bg-background">
-            <div className="flex justify-end mb-2">
+          <div className="flex-1 overflow-auto p-4 bg-background">
+            <div className="flex justify-end mb-3">
               <button
                 onClick={() => copyToClipboard((data.logs as Record<string, string[]>)[selectedLogModule]?.join('\n') || '', 'logs-all')}
-                className="px-2 py-1 border border-border rounded-sm text-[9px] font-mono text-muted-foreground hover:text-primary hover:border-primary/30 transition-smooth"
+                className="px-3 py-1.5 border border-border rounded text-xs text-muted-foreground hover:text-primary hover:border-primary/30 transition-smooth"
               >
                 {copiedId === 'logs-all' ? '✓ Copied' : 'Copy All'}
               </button>
             </div>
-            <div className="font-mono text-[12px] leading-relaxed">
+            <div className="font-mono text-xs leading-relaxed">
               {((data.logs as Record<string, string[]>)[selectedLogModule] || []).map((line, i) => (
-                <div key={i} className="flex">
-                  <span className="w-8 text-right text-muted-foreground/50 mr-3 select-none">{i + 1}</span>
+                <div key={i} className="flex py-0.5">
+                  <span className="w-8 text-right text-muted-foreground/40 mr-3 select-none text-[10px]">{i + 1}</span>
                   <span className={line.startsWith('$') ? 'text-success' : 'text-foreground'}>{line}</span>
                 </div>
               ))}
@@ -571,27 +492,33 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
         </div>
       );
 
-      default: return <EmptyState message="Tab not implemented yet." />;
+      default: return <EmptyState message="Coming soon." />;
     }
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-background">
       {/* Top bar */}
-      <div className="px-4 py-2.5 border-b border-border flex items-center justify-between bg-card">
+      <div className="px-5 py-3 border-b border-border flex items-center justify-between bg-card">
         <div className="flex items-center gap-3">
-          <span className="text-sm font-mono text-primary">{domain || 'No target'}</span>
+          <span className="text-base font-mono font-medium text-primary">{domain || 'No target'}</span>
           {hasResults && (
-            <span className="px-2 py-0.5 bg-neon-cyan/10 border border-neon-cyan/30 rounded-sm text-[9px] font-mono text-neon-cyan uppercase">
+            <span className="px-2.5 py-1 bg-success/10 border border-success/30 rounded text-xs text-success">
               Completed
+            </span>
+          )}
+          {isRunning && (
+            <span className="px-2.5 py-1 bg-primary/10 border border-primary/30 rounded text-xs text-primary flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-scan-pulse" />
+              Scanning
             </span>
           )}
         </div>
         {hasResults && (
-          <div className="flex gap-1.5">
+          <div className="flex gap-2">
             {['HTML', 'PDF', 'JSON', 'MD'].map(fmt => (
-              <button key={fmt} className="px-2 py-1 border border-border rounded-sm text-[9px] font-mono uppercase text-secondary-foreground hover:text-primary hover:border-primary/30 transition-smooth">
-                {fmt}
+              <button key={fmt} className="px-3 py-1.5 border border-border rounded text-xs text-muted-foreground hover:text-primary hover:border-primary/30 transition-smooth">
+                Export {fmt}
               </button>
             ))}
           </div>
@@ -599,27 +526,27 @@ const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardPro
       </div>
 
       {/* Tab bar */}
-      <div className="flex border-b border-border overflow-x-auto bg-card">
+      <div className="flex border-b border-border overflow-x-auto bg-card px-2">
         {TABS.map((tab, i) => (
           <button
             key={tab}
             onClick={() => setActiveTab(i)}
-            className={`px-4 py-2.5 text-[11px] font-mono uppercase tracking-wider whitespace-nowrap transition-smooth border-b-2 flex items-center gap-1.5
+            className={`px-4 py-3 text-sm whitespace-nowrap transition-smooth border-b-2 flex items-center gap-2
               ${activeTab === i
-                ? 'border-b-primary text-primary'
-                : 'border-b-transparent text-muted-foreground hover:text-secondary-foreground'
+                ? 'border-b-primary text-primary font-medium'
+                : 'border-b-transparent text-muted-foreground hover:text-foreground'
               }`}
           >
             {tab}
-            {tab === 'Vulns' && hasResults && totalVulns > 0 && (
-              <span className="px-1 py-0 bg-danger/20 text-danger text-[8px] rounded-sm">{totalVulns}</span>
+            {tab === 'Vulnerabilities' && hasResults && totalVulns > 0 && (
+              <span className="px-1.5 py-0.5 bg-danger/20 text-danger text-[10px] rounded-full font-medium">{totalVulns}</span>
             )}
           </button>
         ))}
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="flex-1 overflow-y-auto p-5">
         {renderTab()}
       </div>
     </div>

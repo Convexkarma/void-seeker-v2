@@ -6,7 +6,7 @@ import ScanHistory from '@/components/ScanHistory';
 import TerminalPanel from '@/components/TerminalPanel';
 import SettingsPage from '@/components/SettingsPage';
 import { ALL_MODULES } from '@/data/mockData';
-import { MODULE_SIMULATION, MODULE_ORDER, SimLine } from '@/data/scanSimulation';
+import { MODULE_SIMULATION, MODULE_ORDER } from '@/data/scanSimulation';
 
 export interface TerminalLine {
   text: string;
@@ -33,7 +33,7 @@ const Index = () => {
   const [activeScanId, setActiveScanId] = useState('scan-001');
 
   const [showTerminal, setShowTerminal] = useState(false);
-  const [showHistory, setShowHistory] = useState(true);
+  const [showHistory, setShowHistory] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [terminalHeight, setTerminalHeight] = useState(280);
   const [terminalLines, setTerminalLines] = useState<TerminalLine[]>([]);
@@ -41,7 +41,6 @@ const Index = () => {
   const cancelledRef = useRef(false);
   const backendOnline = false;
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
@@ -65,14 +64,10 @@ const Index = () => {
     setHasResults(false);
     setShowTerminal(true);
     setTerminalLines([
-      { text: '┌──────────────────────────────────────────┐', color: 'text-primary' },
-      { text: '│  ⚡ AutoRecon Scan Engine v1.0            │', color: 'text-primary' },
-      { text: '│  Target: ' + domain.padEnd(31) + '│', color: 'text-foreground' },
-      { text: '└──────────────────────────────────────────┘', color: 'text-primary' },
+      { text: `⚡ AutoRecon — scanning ${domain}`, color: 'text-primary' },
       { text: '', color: '' },
     ]);
 
-    // Filter to only selected modules that have simulation data, in order
     const modulesToRun = MODULE_ORDER.filter(
       m => selectedModules.includes(m) && MODULE_SIMULATION[m]
     );
@@ -85,12 +80,10 @@ const Index = () => {
       setProgress(pct);
       setCurrentModule(mod);
 
-      // Module header
-      const header = `━━━ [${i + 1}/${modulesToRun.length}] Running: ${mod} ━━━`;
       setTerminalLines(prev => [
         ...prev,
         { text: '', color: '' },
-        { text: header, color: 'text-accent' },
+        { text: `── [${i + 1}/${modulesToRun.length}] ${mod} ──`, color: 'text-accent' },
       ]);
 
       const lines = MODULE_SIMULATION[mod] || [];
@@ -109,7 +102,7 @@ const Index = () => {
       if (!cancelledRef.current) {
         setTerminalLines(prev => [
           ...prev,
-          { text: `✓ ${mod} completed (exit code 0)`, color: 'text-success' },
+          { text: `✓ ${mod} done`, color: 'text-success' },
         ]);
         await sleep(200);
       }
@@ -123,9 +116,7 @@ const Index = () => {
       setTerminalLines(prev => [
         ...prev,
         { text: '', color: '' },
-        { text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', color: 'text-primary' },
-        { text: `⚡ Scan complete — ${domain} — all modules finished`, color: 'text-success' },
-        { text: '━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━', color: 'text-primary' },
+        { text: `⚡ Scan complete — ${domain}`, color: 'text-success' },
       ]);
     }
   }, [selectedModules, domain]);
@@ -138,7 +129,7 @@ const Index = () => {
     setTerminalLines(prev => [
       ...prev,
       { text: '', color: '' },
-      { text: '✗ Scan cancelled by user', color: 'text-danger' },
+      { text: '✗ Scan cancelled', color: 'text-danger' },
     ]);
   };
 
@@ -149,7 +140,7 @@ const Index = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col overflow-hidden grid-bg">
+    <div className="h-screen flex flex-col overflow-hidden bg-background">
       <Navbar
         domain={domain}
         isRunning={isRunning}
@@ -200,7 +191,7 @@ const Index = () => {
       </div>
 
       {!backendOnline && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 px-4 py-2 border border-danger/50 rounded-sm bg-card text-xs font-mono text-danger neon-glow-sm">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-40 px-4 py-2 border border-danger/30 rounded-lg bg-card text-xs font-mono text-danger">
           Backend offline — run: <span className="text-foreground">uvicorn main:app --port 8000</span>
         </div>
       )}

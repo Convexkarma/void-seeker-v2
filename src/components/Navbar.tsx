@@ -1,4 +1,4 @@
-import { Zap, Terminal, LayoutGrid, Settings, Shield, Wifi, WifiOff } from 'lucide-react';
+import { Zap, Terminal, Clock, Settings, Shield } from 'lucide-react';
 
 interface NavbarProps {
   domain: string;
@@ -13,99 +13,63 @@ interface NavbarProps {
 }
 
 const Navbar = ({
-  domain,
   isRunning,
-  backendOnline,
+  domain,
   showTerminal,
   showHistory,
-  stealthMode,
   onToggleTerminal,
   onToggleHistory,
   onOpenSettings,
 }: NavbarProps) => {
   return (
-    <header className="h-12 border-b border-border flex items-center px-4 gap-3 bg-card relative z-50">
+    <header className="h-14 border-b border-border flex items-center px-5 gap-4 bg-card">
       {/* Logo */}
-      <div className="flex items-center gap-2 mr-4">
-        <Zap className="w-4 h-4 text-primary" />
-        <span className="font-display font-bold text-sm tracking-wider text-primary neon-text-glow">
-          AUTO_RECON
+      <div className="flex items-center gap-2 mr-6">
+        <Zap className="w-5 h-5 text-primary" />
+        <span className="font-display font-bold text-base tracking-wider text-primary neon-text-glow">
+          AutoRecon
         </span>
       </div>
 
-      {/* Scan indicator */}
-      {isRunning && domain && (
-        <div className="flex items-center gap-2 px-3 py-1 border border-primary/30 rounded-sm bg-primary/5">
-          <span className="w-1.5 h-1.5 rounded-full bg-primary animate-scan-pulse" />
-          <span className="text-xs font-mono text-primary tracking-wide">
-            SCANNING {domain}
-          </span>
+      {/* Scan status */}
+      {isRunning && (
+        <div className="flex items-center gap-2 px-3 py-1.5 border border-primary/30 rounded bg-primary/5">
+          <span className="w-2 h-2 rounded-full bg-primary animate-scan-pulse" />
+          <span className="text-sm font-mono text-primary">Scanning {domain}</span>
         </div>
-      )}
-
-      {/* Stealth indicator */}
-      {stealthMode && (
-        <span className="text-xs px-2 py-0.5 border border-accent/30 rounded-sm text-accent font-mono">
-          👻 STEALTH
-        </span>
       )}
 
       <div className="flex-1" />
 
-      {/* Backend status */}
-      <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-mono tracking-wide">
-        {backendOnline ? (
-          <>
-            <Wifi className="w-3 h-3 text-success" />
-            <span className="text-success">ONLINE</span>
-          </>
-        ) : (
-          <>
-            <WifiOff className="w-3 h-3 text-danger animate-pulse" />
-            <span className="text-danger">OFFLINE</span>
-          </>
-        )}
-      </div>
-
-      {/* Action buttons */}
+      {/* Simple toggle buttons */}
       <button
         onClick={onToggleTerminal}
-        className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-sm text-[11px] font-mono uppercase tracking-wider transition-smooth
-          ${showTerminal
-            ? 'border-primary/50 bg-primary/10 text-primary'
-            : 'border-border text-secondary-foreground hover:border-primary/30 hover:text-primary'
-          }`}
+        className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition-smooth
+          ${showTerminal ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
       >
-        <Terminal className="w-3 h-3" />
-        Terminal
-        <kbd className="text-[9px] text-muted-foreground ml-1">T</kbd>
+        <Terminal className="w-4 h-4" />
+        <span className="hidden sm:inline">Terminal</span>
       </button>
 
       <button
         onClick={onToggleHistory}
-        className={`flex items-center gap-1.5 px-3 py-1.5 border rounded-sm text-[11px] font-mono uppercase tracking-wider transition-smooth
-          ${showHistory
-            ? 'border-primary/50 bg-primary/10 text-primary'
-            : 'border-border text-secondary-foreground hover:border-primary/30 hover:text-primary'
-          }`}
+        className={`flex items-center gap-2 px-3 py-2 rounded text-sm transition-smooth
+          ${showHistory ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
       >
-        <LayoutGrid className="w-3 h-3" />
-        History
-        <kbd className="text-[9px] text-muted-foreground ml-1">H</kbd>
+        <Clock className="w-4 h-4" />
+        <span className="hidden sm:inline">History</span>
       </button>
 
       <button
         onClick={onOpenSettings}
-        className="flex items-center gap-1.5 px-3 py-1.5 border border-border rounded-sm text-[11px] font-mono uppercase tracking-wider text-secondary-foreground hover:border-primary/30 hover:text-primary transition-smooth"
+        className="flex items-center gap-2 px-3 py-2 rounded text-sm text-muted-foreground hover:text-foreground transition-smooth"
       >
-        <Settings className="w-3 h-3" />
-        Settings
+        <Settings className="w-4 h-4" />
       </button>
 
-      {/* Auth badge */}
-      <div className="flex items-center gap-1.5 px-2 py-1 border border-danger/40 rounded-sm">
-        <Shield className="w-3 h-3 text-danger" />
-        <span className="text-[10px] font-mono text-danger tracking-wide">AUTH ONLY</span>
+      <div className="flex items-center gap-1.5 px-2 py-1 border border-danger/30 rounded text-danger">
+        <Shield className="w-3.5 h-3.5" />
+        <span className="text-[10px] font-mono">AUTH ONLY</span>
       </div>
     </header>
   );
