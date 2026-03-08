@@ -15,6 +15,7 @@ interface NavbarProps {
 const Navbar = ({
   isRunning,
   domain,
+  backendOnline,
   showTerminal,
   showHistory,
   onToggleTerminal,
