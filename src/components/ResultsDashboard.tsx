@@ -528,12 +528,12 @@ const ResultsDashboard = ({ domain, isRunning, hasResults, onGenerateReport, bac
       </div>
 
       {/* Tab bar */}
-      <div className="flex border-b border-border overflow-x-auto bg-card px-2">
+      <div className="flex border-b border-border overflow-x-auto bg-card px-1 sm:px-2 scrollbar-none">
         {TABS.map((tab, i) => (
           <button
             key={tab}
             onClick={() => setActiveTab(i)}
-            className={`px-4 py-3 text-sm whitespace-nowrap transition-smooth border-b-2 flex items-center gap-2
+            className={`px-2.5 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm whitespace-nowrap transition-smooth border-b-2 flex items-center gap-1.5 sm:gap-2
               ${activeTab === i
                 ? 'border-b-primary text-primary font-medium'
                 : 'border-b-transparent text-muted-foreground hover:text-foreground'
