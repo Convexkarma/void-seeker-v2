@@ -66,7 +66,7 @@ pip install -r requirements.txt
 ```bash
 chmod +x backend/setup.sh
 ./backend/setup.sh
-source ~/.bashrc
+source ~/.zshrc   # or source ~/.bashrc if using bash
 ```
 
 This installs: `nmap`, `subfinder`, `nuclei`, `httpx`, `gobuster`, `whatweb`, `whois`, `wafw00f`, `testssl.sh`, `gowitness`, and more.
