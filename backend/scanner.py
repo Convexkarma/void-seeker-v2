@@ -362,8 +362,8 @@ class ScanOrchestrator:
         """Send webhook notifications on scan complete."""
         msg = (
             f"⚡ AutoRecon scan complete: {self.domain}\n"
-            f"Subdomains: {summary['subdomains']} | Ports: {summary['ports']} | "
-            f"Critical: {summary['vulns']['critical']} | High: {summary['vulns']['high']}"
+            f"Subdomains: {summary.get('subdomains', 0)} | Ports: {summary.get('ports', 0)} | "
+            f"Critical: {summary.get('critical', 0)} | High: {summary.get('high', 0)}"
         )
         for key in ("discord_webhook", "slack_webhook"):
             url = self.notify_config.get(key, "")
