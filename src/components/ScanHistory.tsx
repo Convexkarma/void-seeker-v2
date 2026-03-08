@@ -10,15 +10,15 @@ const ScanHistory = ({ onLoadScan, activeScanId }: ScanHistoryProps) => {
   const history = MOCK_RESULTS.scanHistory;
 
   return (
-    <div className="w-[264px] min-w-[264px] border-l border-border bg-card flex flex-col overflow-hidden">
-      <div className="px-4 py-3 border-b border-border">
-        <h2 className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Scan History</h2>
+    <div className="w-[280px] min-w-[280px] border-l border-border bg-card flex flex-col">
+      <div className="px-5 py-4 border-b border-border">
+        <h2 className="text-sm font-semibold text-foreground">Scan History</h2>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {history.length === 0 ? (
-          <div className="p-4 text-center">
-            <p className="text-xs font-mono text-muted-foreground">No scans yet.</p>
+          <div className="p-5 text-center">
+            <p className="text-sm text-muted-foreground">No scans yet</p>
           </div>
         ) : (
           <div className="divide-y divide-border">
@@ -26,40 +26,34 @@ const ScanHistory = ({ onLoadScan, activeScanId }: ScanHistoryProps) => {
               <div
                 key={scan.id}
                 onClick={() => onLoadScan(scan.id)}
-                className={`px-4 py-3 cursor-pointer transition-smooth group hover:bg-elevated
-                  ${activeScanId === scan.id ? 'bg-elevated border-l-2 border-l-primary' : ''}`}
+                className={`px-5 py-4 cursor-pointer transition-smooth group hover:bg-background
+                  ${activeScanId === scan.id ? 'bg-background border-l-2 border-l-primary' : ''}`}
               >
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-mono text-primary">{scan.domain}</span>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-mono font-medium text-primary">{scan.domain}</span>
                   <button className="opacity-0 group-hover:opacity-100 transition-smooth text-muted-foreground hover:text-danger">
-                    <Trash2 className="w-3 h-3" />
+                    <Trash2 className="w-3.5 h-3.5" />
                   </button>
                 </div>
-                <div className="flex items-center gap-2 mb-1.5">
+
+                <div className="flex items-center gap-2 mb-2">
                   {scan.status === 'completed' ? (
-                    <span className="flex items-center gap-1 text-[10px] font-mono text-neon-cyan">
-                      ■ COMPLETED
-                    </span>
+                    <span className="text-xs text-success font-medium">✓ Completed</span>
                   ) : scan.status === 'running' ? (
-                    <span className="flex items-center gap-1 text-[10px] font-mono text-primary">
-                      <span className="w-1 h-1 rounded-full bg-primary animate-scan-pulse" />
-                      SCANNING
+                    <span className="flex items-center gap-1.5 text-xs text-primary">
+                      <span className="w-1.5 h-1.5 rounded-full bg-primary animate-scan-pulse" />
+                      Scanning
                     </span>
                   ) : (
-                    <span className="text-[10px] font-mono text-danger">✗ CANCELLED</span>
+                    <span className="text-xs text-danger">✗ Cancelled</span>
                   )}
-                  <span className="text-[10px] font-mono text-muted-foreground">
-                    {timeAgo(scan.created_at)}
-                  </span>
+                  <span className="text-xs text-muted-foreground">{timeAgo(scan.created_at)}</span>
                 </div>
-                <div className="flex items-center gap-3 text-[10px] font-mono">
-                  <span className="text-secondary-foreground">{scan.subdomains} subs</span>
-                  {scan.critical > 0 && (
-                    <span className="text-danger">{scan.critical} crit</span>
-                  )}
-                  {scan.high > 0 && (
-                    <span className="text-warning">{scan.high} high</span>
-                  )}
+
+                <div className="flex items-center gap-3 text-xs">
+                  <span className="text-muted-foreground">{scan.subdomains} subs</span>
+                  {scan.critical > 0 && <span className="text-danger font-medium">{scan.critical} crit</span>}
+                  {scan.high > 0 && <span className="text-warning font-medium">{scan.high} high</span>}
                   <span className="text-muted-foreground">{scan.ports} ports</span>
                 </div>
               </div>

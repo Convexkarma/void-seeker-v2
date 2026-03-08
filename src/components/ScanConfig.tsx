@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { MODULES, SCAN_PROFILES, ALL_MODULES } from '@/data/mockData';
-import { AlertTriangle, Search } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ChevronUp, Play, Square } from 'lucide-react';
 
 interface ScanConfigProps {
   domain: string;
@@ -26,15 +26,13 @@ const ScanConfig = ({
   setSelectedModules,
 }: ScanConfigProps) => {
   const [activeProfile, setActiveProfile] = useState<string>('full');
-  const [threads, setThreads] = useState(10);
-  const [stealth, setStealth] = useState(false);
   const [authorized, setAuthorized] = useState(false);
+  const [showModules, setShowModules] = useState(false);
 
   const selectProfile = (key: string) => {
     setActiveProfile(key);
     const profile = SCAN_PROFILES[key as keyof typeof SCAN_PROFILES];
     setSelectedModules(profile.modules);
-    if (key === 'stealth') setStealth(true);
   };
 
   const toggleModule = (mod: string) => {
@@ -52,182 +50,166 @@ const ScanConfig = ({
   };
 
   return (
-    <div className="w-[280px] min-w-[280px] border-r border-border bg-card flex flex-col overflow-y-auto">
+    <div className="w-[300px] min-w-[300px] border-r border-border bg-card flex flex-col">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-border">
-        <h2 className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Scan Configuration</h2>
+      <div className="px-5 py-4 border-b border-border">
+        <h2 className="text-sm font-semibold text-foreground">Scan Setup</h2>
+        <p className="text-xs text-muted-foreground mt-0.5">Configure and launch your reconnaissance scan</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-5">
-        {/* Target input */}
+      <div className="flex-1 overflow-y-auto p-5 space-y-6">
+        {/* Step 1: Target */}
         <div>
-          <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1.5 block">Target</label>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
-            <input
-              type="text"
-              value={domain}
-              onChange={e => handleDomainChange(e.target.value)}
-              placeholder="target.com"
-              className="w-full bg-background border border-border rounded-sm px-3 pl-8 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:neon-glow-sm transition-smooth"
-              disabled={isRunning}
-            />
-          </div>
+          <label className="text-xs font-medium text-foreground mb-2 block">
+            1. Enter Target Domain
+          </label>
+          <input
+            type="text"
+            value={domain}
+            onChange={e => handleDomainChange(e.target.value)}
+            placeholder="example.com"
+            className="w-full bg-background border border-border rounded px-3 py-2.5 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary/30 transition-smooth"
+            disabled={isRunning}
+          />
         </div>
 
-        {/* Scan profiles */}
+        {/* Step 2: Scan Profile */}
         <div>
-          <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2 block">Profile</label>
-          <div className="grid grid-cols-2 gap-1.5">
+          <label className="text-xs font-medium text-foreground mb-2 block">
+            2. Choose Scan Profile
+          </label>
+          <div className="grid grid-cols-2 gap-2">
             {Object.entries(SCAN_PROFILES).map(([key, profile]) => (
               <button
                 key={key}
                 onClick={() => selectProfile(key)}
                 disabled={isRunning}
-                className={`px-3 py-2 border rounded-sm text-[11px] font-mono uppercase tracking-wider transition-smooth
+                className={`px-3 py-2.5 border rounded text-sm font-medium transition-smooth
                   ${activeProfile === key
-                    ? 'border-primary bg-primary/10 text-primary neon-glow-sm'
+                    ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border text-secondary-foreground hover:border-primary/30'
                   } disabled:opacity-30`}
               >
                 {profile.label}
+                <span className="block text-[10px] text-muted-foreground mt-0.5 font-normal">
+                  {profile.modules.length} tools
+                </span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* Module toggles */}
+        {/* Expandable modules */}
         <div>
-          <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-2 block">Modules</label>
-          <div className="space-y-3">
-            {Object.entries(MODULES).map(([key, group]) => (
-              <div key={key}>
-                <span className={`text-[9px] font-mono uppercase tracking-widest mb-1 block
-                  ${key === 'recon' ? 'text-primary' :
-                    key === 'web' ? 'text-neon-cyan' :
-                    key === 'scan' ? 'text-warning' :
-                    key === 'fuzz' ? 'text-danger' :
-                    key === 'vuln' ? 'text-danger' :
-                    'text-accent'}`}>
-                  {group.label}
-                </span>
-                {group.modules.map(mod => (
-                  <label
-                    key={mod}
-                    className="flex items-center gap-2 py-0.5 cursor-pointer group"
-                  >
-                    <div
-                      className={`w-3.5 h-3.5 border rounded-sm flex items-center justify-center transition-smooth
-                        ${selectedModules.includes(mod)
-                          ? 'bg-primary border-primary'
-                          : 'border-border group-hover:border-primary/50'
-                        }`}
-                      onClick={() => !isRunning && toggleModule(mod)}
-                    >
-                      {selectedModules.includes(mod) && (
-                        <span className="text-[10px] text-primary-foreground">✓</span>
-                      )}
-                    </div>
-                    <span className="text-xs font-mono text-secondary-foreground">{mod}</span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-success ml-auto" title="Installed" />
-                  </label>
-                ))}
-              </div>
-            ))}
-          </div>
-        </div>
+          <button
+            onClick={() => setShowModules(!showModules)}
+            className="flex items-center justify-between w-full text-xs text-muted-foreground hover:text-foreground transition-smooth"
+          >
+            <span>{selectedModules.length} of {ALL_MODULES.length} modules selected</span>
+            {showModules ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+          </button>
 
-        {/* Options */}
-        <div className="space-y-3">
-          <div>
-            <label className="text-[10px] font-mono uppercase tracking-widest text-muted-foreground mb-1.5 flex items-center justify-between">
-              Threads
-              <span className="text-primary">{threads}</span>
-            </label>
-            <input
-              type="range"
-              min={1}
-              max={50}
-              value={threads}
-              onChange={e => setThreads(Number(e.target.value))}
-              className="w-full accent-primary h-1"
-              disabled={isRunning}
-            />
-          </div>
-
-          <label className="flex items-center justify-between cursor-pointer">
-            <span className="text-xs font-mono text-secondary-foreground">Stealth Mode</span>
-            <div
-              onClick={() => !isRunning && setStealth(!stealth)}
-              className={`w-9 h-5 rounded-full transition-smooth relative cursor-pointer
-                ${stealth ? 'bg-primary' : 'bg-border'}`}
-            >
-              <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-foreground transition-smooth
-                ${stealth ? 'left-[18px]' : 'left-0.5'}`} />
+          {showModules && (
+            <div className="mt-3 space-y-3 border border-border rounded p-3 bg-background">
+              {Object.entries(MODULES).map(([key, group]) => (
+                <div key={key}>
+                  <span className={`text-[10px] font-mono uppercase tracking-wider mb-1.5 block
+                    ${key === 'recon' ? 'text-primary' :
+                      key === 'web' ? 'text-neon-cyan' :
+                      key === 'scan' ? 'text-warning' :
+                      key === 'fuzz' || key === 'vuln' ? 'text-danger' :
+                      'text-accent'}`}>
+                    {group.label}
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {group.modules.map(mod => (
+                      <button
+                        key={mod}
+                        onClick={() => !isRunning && toggleModule(mod)}
+                        className={`px-2 py-1 rounded text-xs font-mono transition-smooth border
+                          ${selectedModules.includes(mod)
+                            ? 'bg-primary/15 border-primary/40 text-primary'
+                            : 'border-border text-muted-foreground hover:border-primary/30'
+                          }`}
+                      >
+                        {mod}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
-          </label>
+          )}
         </div>
 
         {/* Progress */}
         {isRunning && (
-          <div className="bracket-card border border-primary/20 rounded-sm p-3 bg-primary/5">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-primary animate-scan-pulse" />
-              <span className="text-[10px] font-mono uppercase tracking-widest text-primary">Scanning</span>
-              <span className="text-xs font-mono text-primary ml-auto">{progress}%</span>
+          <div className="border border-primary/30 rounded p-4 bg-primary/5 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-primary animate-scan-pulse" />
+                <span className="text-sm font-medium text-primary">Scanning...</span>
+              </div>
+              <span className="text-lg font-mono font-bold text-primary">{progress}%</span>
             </div>
-            <div className="w-full h-1.5 bg-border rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-border rounded-full overflow-hidden">
               <div
                 className="h-full progress-gradient rounded-full transition-all duration-500"
                 style={{ width: `${progress}%` }}
               />
             </div>
             {currentModule && (
-              <p className="text-[10px] font-mono text-muted-foreground mt-1.5">
-                Running: {currentModule}
+              <p className="text-xs text-muted-foreground">
+                Running <span className="text-primary font-mono">{currentModule}</span>
               </p>
             )}
           </div>
         )}
 
-        {/* Authorization */}
-        <div className="border border-danger/30 rounded-sm p-3 bg-danger/5">
-          <div className="flex items-start gap-2">
-            <AlertTriangle className="w-3.5 h-3.5 text-danger mt-0.5 flex-shrink-0" />
-            <label className="cursor-pointer flex items-start gap-2">
-              <input
-                type="checkbox"
-                checked={authorized}
-                onChange={e => setAuthorized(e.target.checked)}
-                className="mt-0.5 accent-danger"
-                disabled={isRunning || !domain}
-              />
-              <span className="text-[11px] text-danger/80 leading-tight">
-                I confirm I have written authorization to test this target.
-              </span>
-            </label>
-          </div>
+        {/* Step 3: Authorization */}
+        <div className="border border-danger/20 rounded p-3 bg-danger/5">
+          <label className="flex items-start gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={authorized}
+              onChange={e => setAuthorized(e.target.checked)}
+              className="mt-1 accent-danger w-4 h-4"
+              disabled={isRunning || !domain}
+            />
+            <div>
+              <div className="flex items-center gap-1.5 text-sm font-medium text-danger">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                Authorization Required
+              </div>
+              <p className="text-xs text-danger/70 mt-1">
+                I have written permission to test this target.
+              </p>
+            </div>
+          </label>
         </div>
 
         {/* Launch button */}
         <button
           onClick={isRunning ? onCancelScan : onStartScan}
           disabled={!isRunning && (!domain || !authorized || selectedModules.length === 0)}
-          className={`w-full py-3 border-2 rounded-sm font-mono text-sm uppercase tracking-widest transition-smooth
+          className={`w-full py-3.5 rounded font-medium text-sm flex items-center justify-center gap-2 transition-smooth
             ${isRunning
-              ? 'border-danger text-danger hover:bg-danger/10'
-              : 'border-primary text-primary hover:bg-primary hover:text-primary-foreground hover:neon-glow disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-primary'
+              ? 'bg-danger/10 border border-danger text-danger hover:bg-danger/20'
+              : 'bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-30 disabled:cursor-not-allowed'
             }`}
         >
-          {isRunning ? '■ CANCEL SCAN' : '⚡ LAUNCH SCAN'}
+          {isRunning ? (
+            <>
+              <Square className="w-4 h-4" />
+              Cancel Scan
+            </>
+          ) : (
+            <>
+              <Play className="w-4 h-4" />
+              Launch Scan
+            </>
+          )}
         </button>
-
-        {/* Legal */}
-        <div className="border border-danger/20 rounded-sm p-2">
-          <p className="text-[9px] font-mono text-danger/50 leading-relaxed">
-            DISCLAIMER: Only use on systems you own or have explicit written permission to test. Unauthorized access is illegal.
-          </p>
-        </div>
       </div>
     </div>
   );
