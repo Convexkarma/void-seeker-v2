@@ -82,7 +82,25 @@ export async function loadScanResults(scanId: string): Promise<Record<string, un
 export async function fetchScanHistory(): Promise<ScanHistoryEntry[]> {
   const res = await fetch(`${API_BASE}/api/scan/history`);
   if (!res.ok) return [];
-  return res.json();
+  const raw = await res.json();
+  // Normalize: backend may return summary as nested object
+  return raw.map((entry: Record<string, unknown>) => {
+    const summary = (entry.summary || {}) as Record<string, number>;
+    return {
+      id: entry.id,
+      domain: entry.domain,
+      status: entry.status,
+      created_at: entry.created_at,
+      completed_at: entry.completed_at,
+      duration: entry.duration || 0,
+      progress: entry.progress || 0,
+      subdomains: entry.subdomains ?? summary.subdomains ?? 0,
+      ports: entry.ports ?? summary.open_ports ?? 0,
+      critical: entry.critical ?? summary.critical ?? 0,
+      high: entry.high ?? summary.high ?? 0,
+      medium: entry.medium ?? summary.medium ?? 0,
+    } as ScanHistoryEntry;
+  });
 }
 
 // ── Delete scan ─────────────────────────────────────────────────
