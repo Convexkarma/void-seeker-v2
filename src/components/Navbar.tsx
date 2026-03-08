@@ -40,6 +40,12 @@ const Navbar = ({
         </div>
       )}
 
+      {/* Backend status */}
+      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono ${backendOnline ? 'text-success' : 'text-danger'}`}>
+        <span className={`w-2 h-2 rounded-full ${backendOnline ? 'bg-success' : 'bg-danger animate-pulse'}`} />
+        {backendOnline ? 'Backend OK' : 'Offline'}
+      </div>
+
       <div className="flex-1" />
 
       {/* Simple toggle buttons */}
