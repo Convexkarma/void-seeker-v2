@@ -7,6 +7,8 @@ interface ResultsDashboardProps {
   domain: string;
   isRunning: boolean;
   hasResults: boolean;
+  onGenerateReport?: (format: string) => void;
+  backendOnline?: boolean;
 }
 
 const TABS = ['Overview', 'Subdomains', 'Ports', 'Vulnerabilities', 'Directories', 'Tech & Headers', 'DNS & WHOIS', 'Logs'];

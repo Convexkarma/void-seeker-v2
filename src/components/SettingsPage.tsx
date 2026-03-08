@@ -3,9 +3,10 @@ import { X, Eye, EyeOff, RefreshCw, Check } from 'lucide-react';
 
 interface SettingsPageProps {
   onClose: () => void;
+  backendOnline?: boolean;
 }
 
-const SettingsPage = ({ onClose }: SettingsPageProps) => {
+const SettingsPage = ({ onClose, backendOnline }: SettingsPageProps) => {
   const [saved, setSaved] = useState(false);
 
   const tools = [
