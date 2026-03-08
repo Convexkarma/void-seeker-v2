@@ -7,11 +7,13 @@ interface ResultsDashboardProps {
   domain: string;
   isRunning: boolean;
   hasResults: boolean;
+  onGenerateReport?: (format: string) => void;
+  backendOnline?: boolean;
 }
 
 const TABS = ['Overview', 'Subdomains', 'Ports', 'Vulnerabilities', 'Directories', 'Tech & Headers', 'DNS & WHOIS', 'Logs'];
 
-const ResultsDashboard = ({ domain, isRunning, hasResults }: ResultsDashboardProps) => {
+const ResultsDashboard = ({ domain, isRunning, hasResults, onGenerateReport, backendOnline }: ResultsDashboardProps) => {
   const [activeTab, setActiveTab] = useState(0);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [vulnFilter, setVulnFilter] = useState('all');

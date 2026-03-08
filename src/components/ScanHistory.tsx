@@ -1,28 +1,48 @@
 import { MOCK_RESULTS, timeAgo } from '@/data/mockData';
 import { Trash2 } from 'lucide-react';
 
-interface ScanHistoryProps {
-  onLoadScan: (id: string) => void;
-  activeScanId: string;
+interface ScanHistoryEntry {
+  id: string;
+  domain: string;
+  status: string;
+  created_at: string;
+  subdomains: number;
+  critical: number;
+  high: number;
+  ports: number;
 }
 
-const ScanHistory = ({ onLoadScan, activeScanId }: ScanHistoryProps) => {
-  const history = MOCK_RESULTS.scanHistory;
+interface ScanHistoryProps {
+  onLoadScan: (id: string) => void;
+  onDeleteScan?: (id: string) => void;
+  activeScanId: string;
+  history?: ScanHistoryEntry[];
+  backendOnline?: boolean;
+}
+
+const ScanHistory = ({ onLoadScan, onDeleteScan, activeScanId, history, backendOnline }: ScanHistoryProps) => {
+  // Use real history if backend is online, otherwise fall back to mock
+  const entries = backendOnline && history && history.length > 0
+    ? history
+    : MOCK_RESULTS.scanHistory;
 
   return (
     <div className="w-[280px] min-w-[280px] border-l border-border bg-card flex flex-col">
       <div className="px-5 py-4 border-b border-border">
         <h2 className="text-sm font-semibold text-foreground">Scan History</h2>
+        {backendOnline && (
+          <p className="text-[10px] text-success mt-0.5">● Live from backend</p>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {history.length === 0 ? (
+        {entries.length === 0 ? (
           <div className="p-5 text-center">
             <p className="text-sm text-muted-foreground">No scans yet</p>
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {history.map(scan => (
+            {entries.map(scan => (
               <div
                 key={scan.id}
                 onClick={() => onLoadScan(scan.id)}
@@ -31,9 +51,14 @@ const ScanHistory = ({ onLoadScan, activeScanId }: ScanHistoryProps) => {
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-sm font-mono font-medium text-primary">{scan.domain}</span>
-                  <button className="opacity-0 group-hover:opacity-100 transition-smooth text-muted-foreground hover:text-danger">
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+                  {onDeleteScan && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onDeleteScan(scan.id); }}
+                      className="opacity-0 group-hover:opacity-100 transition-smooth text-muted-foreground hover:text-danger"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
                 </div>
 
                 <div className="flex items-center gap-2 mb-2">
