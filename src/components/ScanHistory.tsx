@@ -21,13 +21,12 @@ interface ScanHistoryProps {
 }
 
 const ScanHistory = ({ onLoadScan, onDeleteScan, activeScanId, history, backendOnline }: ScanHistoryProps) => {
-  // Use real history if backend is online, otherwise fall back to mock
   const entries = backendOnline && history && history.length > 0
     ? history
     : MOCK_RESULTS.scanHistory;
 
   return (
-    <div className="w-[280px] min-w-[280px] border-l border-border bg-card flex flex-col">
+    <div className="w-full sm:w-[280px] sm:min-w-[280px] border-l border-border bg-card flex flex-col h-full">
       <div className="px-5 py-4 border-b border-border">
         <h2 className="text-sm font-semibold text-foreground">Scan History</h2>
         {backendOnline && (

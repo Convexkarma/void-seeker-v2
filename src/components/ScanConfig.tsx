@@ -50,7 +50,7 @@ const ScanConfig = ({
   };
 
   return (
-    <div className="w-[300px] min-w-[300px] border-r border-border bg-card flex flex-col">
+    <div className="w-full sm:w-[300px] sm:min-w-[300px] border-r border-border bg-card flex flex-col h-full">
       {/* Header */}
       <div className="px-5 py-4 border-b border-border">
         <h2 className="text-sm font-semibold text-foreground">Scan Setup</h2>

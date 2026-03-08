@@ -548,7 +548,7 @@ const ResultsDashboard = ({ domain, isRunning, hasResults, onGenerateReport, bac
       </div>
 
       {/* Tab content */}
-      <div className="flex-1 overflow-y-auto p-5">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-5">
         {renderTab()}
       </div>
     </div>
