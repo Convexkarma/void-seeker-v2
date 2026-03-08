@@ -292,24 +292,68 @@ class ScanOrchestrator:
         return hints.get(module, f"Install {module}")
 
     def _build_summary(self, results: dict) -> dict:
-        subs = results.get("subfinder", {}).get("subdomains", [])
-        subs += results.get("amass", {}).get("subdomains", [])
-        ports = results.get("nmap", {}).get("ports", [])
-        vulns = results.get("nuclei", {}).get("findings", [])
-        dirs = results.get("gobuster", {}).get("directories", [])
-        emails = results.get("theHarvester", {}).get("emails", [])
+        # Collect subdomains from all possible module keys
+        subs = []
+        for key in ("subfinder", "amass", "subdomain", "subdomains"):
+            mod = results.get(key, {})
+            if isinstance(mod, dict):
+                subs.extend(mod.get("subdomains", []))
+                subs.extend(mod.get("results", []))
+            elif isinstance(mod, list):
+                subs.extend(mod)
+
+        # Collect ports
+        ports = []
+        for key in ("nmap", "portscan", "ports"):
+            mod = results.get(key, {})
+            if isinstance(mod, dict):
+                ports.extend(mod.get("ports", []))
+                ports.extend(mod.get("results", []))
+            elif isinstance(mod, list):
+                ports.extend(mod)
+
+        # Collect vulns
+        vulns = []
+        for key in ("nuclei", "vulnscan", "vulns"):
+            mod = results.get(key, {})
+            if isinstance(mod, dict):
+                vulns.extend(mod.get("findings", []))
+
+        # Collect dirs
+        dirs = []
+        for key in ("gobuster", "dirbrute", "dirs"):
+            mod = results.get(key, {})
+            if isinstance(mod, dict):
+                dirs.extend(mod.get("directories", []))
+                dirs.extend(mod.get("results", []))
+            elif isinstance(mod, list):
+                dirs.extend(mod)
+
+        # Collect emails
+        emails = []
+        for key in ("theHarvester", "harvester", "osint"):
+            mod = results.get(key, {})
+            if isinstance(mod, dict):
+                emails.extend(mod.get("emails", []))
+
         live = results.get("httpx", {}).get("hosts", [])
 
         vuln_counts = {"critical": 0, "high": 0, "medium": 0, "low": 0, "info": 0}
         for v in vulns:
-            sev = v.get("severity", "info").lower()
+            sev = v.get("severity", "info").lower() if isinstance(v, dict) else "info"
             vuln_counts[sev] = vuln_counts.get(sev, 0) + 1
 
+        # Flatten for frontend compatibility
         return {
             "subdomains": len(set(s if isinstance(s, str) else s.get("name", "") for s in subs)),
             "live_hosts": len(live),
+            "open_ports": len(ports),
             "ports": len(ports),
-            "vulns": vuln_counts,
+            "critical": vuln_counts["critical"],
+            "high": vuln_counts["high"],
+            "medium": vuln_counts["medium"],
+            "low": vuln_counts["low"],
+            "vulnerabilities": sum(vuln_counts.values()) - vuln_counts["info"],
             "directories": len(dirs),
             "emails": len(emails),
         }
@@ -318,8 +362,8 @@ class ScanOrchestrator:
         """Send webhook notifications on scan complete."""
         msg = (
             f"⚡ AutoRecon scan complete: {self.domain}\n"
-            f"Subdomains: {summary['subdomains']} | Ports: {summary['ports']} | "
-            f"Critical: {summary['vulns']['critical']} | High: {summary['vulns']['high']}"
+            f"Subdomains: {summary.get('subdomains', 0)} | Ports: {summary.get('ports', 0)} | "
+            f"Critical: {summary.get('critical', 0)} | High: {summary.get('high', 0)}"
         )
         for key in ("discord_webhook", "slack_webhook"):
             url = self.notify_config.get(key, "")
