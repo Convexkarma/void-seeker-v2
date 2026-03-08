@@ -193,7 +193,7 @@ const ResultsDashboard = ({ domain, isRunning, hasResults, onGenerateReport, bac
               </div>
               <span className="text-sm text-muted-foreground">{filtered.length} found</span>
             </div>
-            <div className="border border-border rounded-lg overflow-hidden">
+            <div className="border border-border rounded-lg overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-card text-muted-foreground text-xs">
